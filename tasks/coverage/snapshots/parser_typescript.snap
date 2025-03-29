@@ -3,7 +3,7 @@ commit: 15392346
 parser_typescript Summary:
 AST Parsed     : 6522/6531 (99.86%)
 Positive Passed: 6511/6531 (99.69%)
-Negative Passed: 1290/5754 (22.42%)
+Negative Passed: 1292/5754 (22.45%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -686,7 +686,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumsWithMul
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/erasableSyntaxOnly.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/erasableSyntaxOnlyDeclaration.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorCause.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorElaboration.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorElaborationDivesIntoApparentlyPresentPropsOnly.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorForBareSpecifierWithImplicitModuleResolutionNone.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorForConflictingExportEqualsValue.ts
@@ -807,7 +806,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaul
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultTypeClassAndValue.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportEqualErrorType.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportEqualMemberMissing.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportInterfaceClassAndValue.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportInterfaceClassAndValueWithDuplicatesInImportList.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierAndLocalMemberDeclaration.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierForAGlobal.ts
@@ -853,6 +851,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStrictN
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forwardDeclaredCommonTypes01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forwardRefInClassProperties.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forwardRefInEnum.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/funClodule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionAndImportNameConflict.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionAndInterfaceWithSeparateErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/functionArgShadowing.ts
@@ -2349,7 +2348,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classHeritageSpecification/classIsSubtypeOfBaseType.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classImplementsMergedClassInterface.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classWithPredefinedTypesAsNames.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/declaredClassMergedwithSelf.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterInitializer.2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock19.ts
@@ -5468,30 +5466,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  13 │     foo() {
     ╰────
 
-  × Identifier `y3` has already been declared
-    ╭─[typescript/tests/cases/compiler/augmentedTypesFunction.ts:13:10]
- 12 │ // function then class
- 13 │ function y3() { } // error
-    ·          ─┬
-    ·           ╰── `y3` has already been declared here
- 14 │ class y3 { } // error
-    ·       ─┬
-    ·        ╰── It can not be redeclared here
- 15 │ 
-    ╰────
-
-  × Identifier `y3a` has already been declared
-    ╭─[typescript/tests/cases/compiler/augmentedTypesFunction.ts:16:10]
- 15 │ 
- 16 │ function y3a() { } // error
-    ·          ─┬─
-    ·           ╰── `y3a` has already been declared here
- 17 │ class y3a { public foo() { } } // error
-    ·       ─┬─
-    ·        ╰── It can not be redeclared here
- 18 │ 
-    ╰────
-
   × Identifier `y4` has already been declared
     ╭─[typescript/tests/cases/compiler/augmentedTypesFunction.ts:20:10]
  19 │ // function then enum
@@ -7797,6 +7771,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ╰── `,` expected
    ╰────
 
+  × Identifier `foo` has already been declared
+    ╭─[typescript/tests/cases/compiler/errorElaboration.ts:10:18]
+  9 │ }
+ 10 │ declare function foo(x: () => Container<Ref<number>>): void;
+    ·                  ─┬─
+    ·                   ╰── `foo` has already been declared here
+ 11 │ let a: () => Container<Ref<string>>;
+    ╰────
+    ╭─[typescript/tests/cases/compiler/errorElaboration.ts:22:7]
+ 21 │ 
+ 22 │ const foo = { bar: 'a' };
+    ·       ─┬─
+    ·        ╰── It can not be redeclared here
+ 23 │ const x = ({ [foo.bar]: c }) => undefined;
+    ╰────
+
   × Unexpected token
     ╭─[typescript/tests/cases/compiler/errorForUsingPropertyOfTypeAsType01.ts:44:24]
  43 │ 
@@ -8055,6 +8045,17 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     export = 0;
    ╰────
 
+  × Identifier `foo` has already been declared
+   ╭─[typescript/tests/cases/compiler/exportInterfaceClassAndValue.ts:1:14]
+ 1 │ export const foo = 1
+   ·              ─┬─
+   ·               ╰── `foo` has already been declared here
+ 2 │ export declare class foo {}
+   ·                      ─┬─
+   ·                       ╰── It can not be redeclared here
+ 3 │ export interface foo {}
+   ╰────
+
   × Identifier `a` has already been declared
    ╭─[typescript/tests/cases/compiler/exportSameNameFuncVar.ts:1:12]
  1 │ export var a = 10;
@@ -8236,20 +8237,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
-
-  × Identifier `foo3` has already been declared
-    ╭─[typescript/tests/cases/compiler/funClodule.ts:15:10]
- 14 │ 
- 15 │ function foo3() { }
-    ·          ──┬─
-    ·            ╰── `foo3` has already been declared here
- 16 │ module foo3 {
- 17 │      export function x(): any { }
- 18 │ }
- 19 │ class foo3 { } // Should error
-    ·       ──┬─
-    ·         ╰── It can not be redeclared here
-    ╰────
 
   × Identifier `aaaaa` has already been declared
    ╭─[typescript/tests/cases/compiler/functionAndPropertyNameConflict.ts:2:12]
@@ -9936,18 +9923,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  26 │ 
     ╰────
 
-  × Identifier `C2` has already been declared
-    ╭─[typescript/tests/cases/compiler/nameCollisions.ts:36:14]
- 35 │ 
- 36 │     function C2() { }
-    ·              ─┬
-    ·               ╰── `C2` has already been declared here
- 37 │     class C2 { } // error
-    ·           ─┬
-    ·            ╰── It can not be redeclared here
- 38 │ 
-    ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/nestedGlobalNamespaceInClass.ts:3:11]
  2 │ class C {
@@ -10052,6 +10027,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·     ─┬
    ·      ╰── It can not be redeclared here
  7 │     }
+   ╰────
+
+  × Identifier `f` has already been declared
+   ╭─[typescript/tests/cases/compiler/nonMergedOverloads.ts:1:5]
+ 1 │ var f = 10;
+   ·     ┬
+   ·     ╰── `f` has already been declared here
+ 2 │ 
+ 3 │ export function f();
+   ·                 ┬
+   ·                 ╰── It can not be redeclared here
+ 4 │ export function f() {
    ╰────
 
   × Identifier `f` has already been declared
@@ -14331,6 +14318,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  18 │ 
     ╰────
 
+  × Identifier `DCC1` has already been declared
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMergedDeclaration.ts:25:24]
+ 24 │ 
+ 25 │ declare abstract class DCC1 {}
+    ·                        ──┬─
+    ·                          ╰── `DCC1` has already been declared here
+ 26 │ declare class DCC1 {}
+    ·               ──┬─
+    ·                 ╰── It can not be redeclared here
+ 27 │ 
+    ╰────
+
+  × Identifier `DCC2` has already been declared
+    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMergedDeclaration.ts:28:15]
+ 27 │ 
+ 28 │ declare class DCC2 {}
+    ·               ──┬─
+    ·                 ╰── `DCC2` has already been declared here
+ 29 │ declare abstract class DCC2 {}
+    ·                        ──┬─
+    ·                          ╰── It can not be redeclared here
+ 30 │ 
+    ╰────
+
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:2:14]
  1 │ class A {
@@ -14483,6 +14494,32 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ class void {}
    ·       ──┬─
    ·         ╰── `{` expected
+   ╰────
+
+  × Identifier `C1` has already been declared
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/declaredClassMergedwithSelf.ts:1:15]
+ 1 │ declare class C1 {}
+   ·               ─┬
+   ·                ╰── `C1` has already been declared here
+ 2 │ 
+ 3 │ declare class C1 {}
+   ·               ─┬
+   ·                ╰── It can not be redeclared here
+ 4 │ 
+   ╰────
+
+  × Identifier `C2` has already been declared
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/declaredClassMergedwithSelf.ts:5:15]
+ 4 │ 
+ 5 │ declare class C2 {}
+   ·               ─┬
+   ·                ╰── `C2` has already been declared here
+ 6 │ 
+ 7 │ interface C2 {}
+ 8 │ 
+ 9 │ declare class C2 {}
+   ·               ─┬
+   ·                ╰── It can not be redeclared here
    ╰────
 
   × Private field 'y' must be declared in an enclosing class

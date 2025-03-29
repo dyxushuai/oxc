@@ -116,20 +116,14 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
 impl<'a> Binder<'a> for Class<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        if !self.declare {
-            let Some(ident) = &self.id else { return };
-            let symbol_id = builder.declare_symbol(
-                ident.span,
-                &ident.name,
-                SymbolFlags::Class,
-                if self.is_declaration() {
-                    SymbolFlags::ClassExcludes
-                } else {
-                    SymbolFlags::empty()
-                },
-            );
-            ident.symbol_id.set(Some(symbol_id));
-        }
+        let Some(ident) = &self.id else { return };
+        let symbol_id = builder.declare_symbol(
+            ident.span,
+            &ident.name,
+            SymbolFlags::Class,
+            SymbolFlags::ClassExcludes,
+        );
+        ident.symbol_id.set(Some(symbol_id));
     }
 }
 
@@ -157,9 +151,6 @@ fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuild
 
 impl<'a> Binder<'a> for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        if self.r#type.is_typescript_syntax() {
-            return;
-        }
         if let Some(ident) = &self.id {
             if is_function_part_of_if_statement(self, builder) {
                 let symbol_id = builder.scoping.create_symbol(
