@@ -7,18 +7,11 @@ import {
   StatusBarAlignment,
   StatusBarItem,
   ThemeColor,
-  Uri,
   window,
   workspace,
 } from 'vscode';
 
-import {
-  DidChangeWatchedFilesNotification,
-  ExecuteCommandRequest,
-  FileChangeType,
-  MessageType,
-  ShowMessageNotification,
-} from 'vscode-languageclient';
+import { ExecuteCommandRequest, MessageType, ShowMessageNotification } from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
@@ -41,7 +34,7 @@ const enum LspCommands {
   FixAll = 'oxc.fixAll',
 }
 
-let client: LanguageClient;
+let client: LanguageClient | undefined;
 
 let myStatusBarItem: StatusBarItem;
 
@@ -50,7 +43,7 @@ export async function activate(context: ExtensionContext) {
   const restartCommand = commands.registerCommand(
     OxcCommands.RestartServer,
     async () => {
-      if (!client) {
+      if (client === undefined) {
         window.showErrorMessage('oxc client not found');
         return;
       }
@@ -58,14 +51,9 @@ export async function activate(context: ExtensionContext) {
       try {
         if (client.isRunning()) {
           await client.restart();
-          // ToDo: refactor it on the server side.
-          // Do not touch watchers on client side, just simplify the restart of the server.
-          const configFiles = await findOxlintrcConfigFiles();
-          await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
-
           window.showInformationMessage('oxc server restarted.');
         } else {
-          await startClient();
+          await client.start();
         }
       } catch (err) {
         client.error('Restarting client failed', err, 'force');
@@ -85,13 +73,17 @@ export async function activate(context: ExtensionContext) {
     async () => {
       await configService.config.updateEnable(!configService.config.enable);
 
+      if (client === undefined) {
+        return;
+      }
+
       if (client.isRunning()) {
         if (!configService.config.enable) {
           await client.stop();
         }
       } else {
         if (configService.config.enable) {
-          await startClient();
+          await client.start();
         }
       }
     },
@@ -183,6 +175,10 @@ export async function activate(context: ExtensionContext) {
     run,
     debug: run,
   };
+
+  const fileWatchers = createFileEventWatchers(configService.config.configPath);
+  context.subscriptions.push(...fileWatchers);
+
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
@@ -201,7 +197,7 @@ export async function activate(context: ExtensionContext) {
     })),
     synchronize: {
       // Notify the server about file config changes in the workspace
-      fileEvents: createFileEventWatchers(configService.config.configPath),
+      fileEvents: fileWatchers,
     },
     initializationOptions: {
       settings: configService.config.toLanguageServerConfig(),
@@ -239,14 +235,21 @@ export async function activate(context: ExtensionContext) {
   });
 
   workspace.onDidDeleteFiles((event) => {
-    event.files.forEach((fileUri) => {
-      client.diagnostics?.delete(fileUri);
-    });
+    for (const fileUri of event.files) {
+      client?.diagnostics?.delete(fileUri);
+    }
   });
 
-  configService.onConfigChange = function onConfigChange(event) {
+  configService.onConfigChange = async function onConfigChange(event) {
     let settings = this.config.toLanguageServerConfig();
     updateStatsBar(this.config.enable);
+
+    if (client === undefined) {
+      return;
+    }
+
+    // update the initializationOptions for a possible restart
+    client.clientOptions.initializationOptions = { settings };
 
     if (client.isRunning()) {
       client.sendNotification('workspace/didChangeConfiguration', { settings });
@@ -257,10 +260,7 @@ export async function activate(context: ExtensionContext) {
       client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.config.configPath);
 
       if (client.isRunning()) {
-        client.restart().then(async () => {
-          const configFiles = await findOxlintrcConfigFiles();
-          await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
-        });
+        await client.restart();
       }
     }
   };
@@ -287,49 +287,28 @@ export async function activate(context: ExtensionContext) {
   updateStatsBar(configService.config.enable);
 
   if (configService.config.enable) {
-    await startClient();
+    await client.start();
   }
 }
 
-// Starts the client, it does not check if it is already started
-async function startClient() {
-  await client.start();
-  // ToDo: refactor it on the server side.
-  // Do not touch watchers on client side, just simplify the start of the server.
-  const configFiles = await findOxlintrcConfigFiles();
-  await sendDidChangeWatchedFilesNotificationWith(client, configFiles);
-}
-
-export function deactivate(): Thenable<void> | undefined {
+export async function deactivate(): Promise<void> {
   if (!client) {
     return undefined;
   }
-  return client.stop();
+  await client.stop();
+  client = undefined;
 }
 
+// FileSystemWatcher are not ready on the start and can take some seconds on bigger repositories
+// ToDo: create test to make sure this will never break
 function createFileEventWatchers(configRelativePath: string | null) {
-  const workspaceConfigPatterns = configRelativePath !== null
-    ? (workspace.workspaceFolders || []).map((workspaceFolder) =>
-      new RelativePattern(workspaceFolder, configRelativePath)
-    )
-    : [];
+  if (configRelativePath !== null) {
+    return (workspace.workspaceFolders || []).map((workspaceFolder) =>
+      workspace.createFileSystemWatcher(new RelativePattern(workspaceFolder, configRelativePath))
+    );
+  }
 
   return [
     workspace.createFileSystemWatcher(`**/${oxlintConfigFileName}`),
-    ...workspaceConfigPatterns.map((pattern) => {
-      return workspace.createFileSystemWatcher(pattern);
-    }),
   ];
-}
-
-async function findOxlintrcConfigFiles() {
-  return workspace.findFiles(`**/${oxlintConfigFileName}`);
-}
-
-async function sendDidChangeWatchedFilesNotificationWith(languageClient: LanguageClient, files: Uri[]) {
-  await languageClient.sendNotification(DidChangeWatchedFilesNotification.type, {
-    changes: files.map(file => {
-      return { uri: file.toString(), type: FileChangeType.Created };
-    }),
-  });
 }

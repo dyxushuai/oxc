@@ -276,7 +276,7 @@ impl<'a> AstBuilder<'a> {
         Expression::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
 
-    /// Build an [`Expression::StringLiteral`] with `lossy`.
+    /// Build an [`Expression::StringLiteral`] with `lone_surrogates`.
     ///
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
@@ -284,19 +284,24 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn expression_string_literal_with_lossy<A>(
+    pub fn expression_string_literal_with_lone_surrogates<A>(
         self,
         span: Span,
         value: A,
         raw: Option<Atom<'a>>,
-        lossy: bool,
+        lone_surrogates: bool,
     ) -> Expression<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        Expression::StringLiteral(self.alloc_string_literal_with_lossy(span, value, raw, lossy))
+        Expression::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
     }
 
     /// Build an [`Expression::TemplateLiteral`].
@@ -1895,7 +1900,7 @@ impl<'a> AstBuilder<'a> {
         value: TemplateElementValue<'a>,
         tail: bool,
     ) -> TemplateElement<'a> {
-        TemplateElement { span, value, tail }
+        TemplateElement { span, value, tail, lone_surrogates: Default::default() }
     }
 
     /// Build a [`TemplateElement`], and store it in the memory arena.
@@ -1914,6 +1919,49 @@ impl<'a> AstBuilder<'a> {
         tail: bool,
     ) -> Box<'a, TemplateElement<'a>> {
         Box::new_in(self.template_element(span, value, tail), self.allocator)
+    }
+
+    /// Build a [`TemplateElement`] with `lone_surrogates`.
+    ///
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_template_element_with_lone_surrogates`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `value`
+    /// * `tail`
+    /// * `lone_surrogates`: The template element contains lone surrogates.
+    #[inline]
+    pub fn template_element_with_lone_surrogates(
+        self,
+        span: Span,
+        value: TemplateElementValue<'a>,
+        tail: bool,
+        lone_surrogates: bool,
+    ) -> TemplateElement<'a> {
+        TemplateElement { span, value, tail, lone_surrogates }
+    }
+
+    /// Build a [`TemplateElement`] with `lone_surrogates`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::template_element_with_lone_surrogates`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `value`
+    /// * `tail`
+    /// * `lone_surrogates`: The template element contains lone surrogates.
+    #[inline]
+    pub fn alloc_template_element_with_lone_surrogates(
+        self,
+        span: Span,
+        value: TemplateElementValue<'a>,
+        tail: bool,
+        lone_surrogates: bool,
+    ) -> Box<'a, TemplateElement<'a>> {
+        Box::new_in(
+            self.template_element_with_lone_surrogates(span, value, tail, lone_surrogates),
+            self.allocator,
+        )
     }
 
     /// Build a [`MemberExpression::ComputedMemberExpression`].
@@ -7843,25 +7891,30 @@ impl<'a> AstBuilder<'a> {
         ImportAttributeKey::StringLiteral(self.string_literal(span, value, raw))
     }
 
-    /// Build an [`ImportAttributeKey::StringLiteral`] with `lossy`.
+    /// Build an [`ImportAttributeKey::StringLiteral`] with `lone_surrogates`.
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn import_attribute_key_string_literal_with_lossy<A>(
+    pub fn import_attribute_key_string_literal_with_lone_surrogates<A>(
         self,
         span: Span,
         value: A,
         raw: Option<Atom<'a>>,
-        lossy: bool,
+        lone_surrogates: bool,
     ) -> ImportAttributeKey<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        ImportAttributeKey::StringLiteral(self.string_literal_with_lossy(span, value, raw, lossy))
+        ImportAttributeKey::StringLiteral(self.string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
     }
 
     /// Build an [`ExportNamedDeclaration`].
@@ -8442,25 +8495,30 @@ impl<'a> AstBuilder<'a> {
         ModuleExportName::StringLiteral(self.string_literal(span, value, raw))
     }
 
-    /// Build a [`ModuleExportName::StringLiteral`] with `lossy`.
+    /// Build a [`ModuleExportName::StringLiteral`] with `lone_surrogates`.
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn module_export_name_string_literal_with_lossy<A>(
+    pub fn module_export_name_string_literal_with_lone_surrogates<A>(
         self,
         span: Span,
         value: A,
         raw: Option<Atom<'a>>,
-        lossy: bool,
+        lone_surrogates: bool,
     ) -> ModuleExportName<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        ModuleExportName::StringLiteral(self.string_literal_with_lossy(span, value, raw, lossy))
+        ModuleExportName::StringLiteral(self.string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
     }
 
     /// Build a [`V8IntrinsicExpression`].
@@ -8598,7 +8656,12 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        StringLiteral { span, value: value.into_in(self.allocator), raw, lossy: Default::default() }
+        StringLiteral {
+            span,
+            value: value.into_in(self.allocator),
+            raw,
+            lone_surrogates: Default::default(),
+        }
     }
 
     /// Build a [`StringLiteral`], and store it in the memory arena.
@@ -8622,50 +8685,53 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.string_literal(span, value, raw), self.allocator)
     }
 
-    /// Build a [`StringLiteral`] with `lossy`.
+    /// Build a [`StringLiteral`] with `lone_surrogates`.
     ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal_with_lossy`] instead.
+    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_string_literal_with_lone_surrogates`] instead.
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn string_literal_with_lossy<A>(
+    pub fn string_literal_with_lone_surrogates<A>(
         self,
         span: Span,
         value: A,
         raw: Option<Atom<'a>>,
-        lossy: bool,
+        lone_surrogates: bool,
     ) -> StringLiteral<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        StringLiteral { span, value: value.into_in(self.allocator), raw, lossy }
+        StringLiteral { span, value: value.into_in(self.allocator), raw, lone_surrogates }
     }
 
-    /// Build a [`StringLiteral`] with `lossy`, and store it in the memory arena.
+    /// Build a [`StringLiteral`] with `lone_surrogates`, and store it in the memory arena.
     ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal_with_lossy`] instead.
+    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::string_literal_with_lone_surrogates`] instead.
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn alloc_string_literal_with_lossy<A>(
+    pub fn alloc_string_literal_with_lone_surrogates<A>(
         self,
         span: Span,
         value: A,
         raw: Option<Atom<'a>>,
-        lossy: bool,
+        lone_surrogates: bool,
     ) -> Box<'a, StringLiteral<'a>>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        Box::new_in(self.string_literal_with_lossy(span, value, raw, lossy), self.allocator)
+        Box::new_in(
+            self.string_literal_with_lone_surrogates(span, value, raw, lone_surrogates),
+            self.allocator,
+        )
     }
 
     /// Build a [`BigIntLiteral`].
@@ -9444,7 +9510,7 @@ impl<'a> AstBuilder<'a> {
         JSXAttributeValue::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
 
-    /// Build a [`JSXAttributeValue::StringLiteral`] with `lossy`.
+    /// Build a [`JSXAttributeValue::StringLiteral`] with `lone_surrogates`.
     ///
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
@@ -9452,21 +9518,24 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn jsx_attribute_value_string_literal_with_lossy<A>(
+    pub fn jsx_attribute_value_string_literal_with_lone_surrogates<A>(
         self,
         span: Span,
         value: A,
         raw: Option<Atom<'a>>,
-        lossy: bool,
+        lone_surrogates: bool,
     ) -> JSXAttributeValue<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        JSXAttributeValue::StringLiteral(
-            self.alloc_string_literal_with_lossy(span, value, raw, lossy),
-        )
+        JSXAttributeValue::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
     }
 
     /// Build a [`JSXAttributeValue::ExpressionContainer`].
@@ -9949,7 +10018,7 @@ impl<'a> AstBuilder<'a> {
         TSEnumMemberName::String(self.alloc_string_literal(span, value, raw))
     }
 
-    /// Build a [`TSEnumMemberName::String`] with `lossy`.
+    /// Build a [`TSEnumMemberName::String`] with `lone_surrogates`.
     ///
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
@@ -9957,19 +10026,24 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn ts_enum_member_name_string_with_lossy<A>(
+    pub fn ts_enum_member_name_string_with_lone_surrogates<A>(
         self,
         span: Span,
         value: A,
         raw: Option<Atom<'a>>,
-        lossy: bool,
+        lone_surrogates: bool,
     ) -> TSEnumMemberName<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        TSEnumMemberName::String(self.alloc_string_literal_with_lossy(span, value, raw, lossy))
+        TSEnumMemberName::String(self.alloc_string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
     }
 
     /// Build a [`TSTypeAnnotation`].
@@ -10106,7 +10180,7 @@ impl<'a> AstBuilder<'a> {
         TSLiteral::StringLiteral(self.alloc_string_literal(span, value, raw))
     }
 
-    /// Build a [`TSLiteral::StringLiteral`] with `lossy`.
+    /// Build a [`TSLiteral::StringLiteral`] with `lone_surrogates`.
     ///
     /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
     ///
@@ -10114,19 +10188,24 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn ts_literal_string_literal_with_lossy<A>(
+    pub fn ts_literal_string_literal_with_lone_surrogates<A>(
         self,
         span: Span,
         value: A,
         raw: Option<Atom<'a>>,
-        lossy: bool,
+        lone_surrogates: bool,
     ) -> TSLiteral<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        TSLiteral::StringLiteral(self.alloc_string_literal_with_lossy(span, value, raw, lossy))
+        TSLiteral::StringLiteral(self.alloc_string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
     }
 
     /// Build a [`TSLiteral::TemplateLiteral`].
@@ -13387,27 +13466,30 @@ impl<'a> AstBuilder<'a> {
         TSModuleDeclarationName::StringLiteral(self.string_literal(span, value, raw))
     }
 
-    /// Build a [`TSModuleDeclarationName::StringLiteral`] with `lossy`.
+    /// Build a [`TSModuleDeclarationName::StringLiteral`] with `lone_surrogates`.
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
     /// * `value`: The value of the string.
     /// * `raw`: The raw string as it appears in source code.
-    /// * `lossy`: The string value contains replacement character (U+FFFD).
+    /// * `lone_surrogates`: The string value contains lone surrogates.
     #[inline]
-    pub fn ts_module_declaration_name_string_literal_with_lossy<A>(
+    pub fn ts_module_declaration_name_string_literal_with_lone_surrogates<A>(
         self,
         span: Span,
         value: A,
         raw: Option<Atom<'a>>,
-        lossy: bool,
+        lone_surrogates: bool,
     ) -> TSModuleDeclarationName<'a>
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        TSModuleDeclarationName::StringLiteral(
-            self.string_literal_with_lossy(span, value, raw, lossy),
-        )
+        TSModuleDeclarationName::StringLiteral(self.string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
     }
 
     /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`].

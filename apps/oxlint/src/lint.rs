@@ -10,16 +10,15 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter, LintOptions,
-    LintService, LintServiceOptions, Linter, Oxlintrc, loader::LINT_PARTIAL_LOADER_EXT,
+    LintService, LintServiceOptions, Linter, Oxlintrc,
 };
-use oxc_span::VALID_EXTENSIONS;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
-    walk::{Extensions, Walk},
+    walk::Walk,
 };
 
 #[derive(Debug)]
@@ -70,8 +69,8 @@ impl Runner for LintRunner {
         let provided_path_count = paths.len();
         let now = Instant::now();
 
-        let filter = match Self::get_filters(filter) {
-            Ok(filter) => filter,
+        let filters = match Self::get_filters(filter) {
+            Ok(filters) => filters,
             Err((result, message)) => {
                 stdout.write_all(message.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
                 stdout.flush().unwrap();
@@ -79,12 +78,6 @@ impl Runner for LintRunner {
                 return result;
             }
         };
-
-        let extensions = VALID_EXTENSIONS
-            .iter()
-            .chain(LINT_PARTIAL_LOADER_EXT.iter())
-            .copied()
-            .collect::<Vec<&'static str>>();
 
         let config_search_result =
             Self::find_oxlint_config(&self.cwd, basic_options.config.as_ref());
@@ -163,7 +156,7 @@ impl Runner for LintRunner {
                 }) {
                     stdout.write_all(end.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
                     stdout.flush().unwrap();
-                };
+                }
 
                 return CliRunResult::LintNoFilesFound;
             }
@@ -172,7 +165,7 @@ impl Runner for LintRunner {
         }
 
         let walker = Walk::new(&paths, &ignore_options, override_builder);
-        let paths = walker.with_extensions(Extensions(extensions)).paths();
+        let paths = walker.paths();
 
         let number_of_files = paths.len();
 
@@ -222,8 +215,8 @@ impl Runner for LintRunner {
                         return CliRunResult::InvalidOptionConfig;
                     }
                 }
-                // TODO(perf): figure out if we can avoid cloning `filter`
-                .with_filters(filter.clone());
+                .with_filters(&filters);
+
                 match builder.build() {
                     Ok(config) => nested_configs.insert(dir.to_path_buf(), config),
                     Err(diagnostic) => {
@@ -266,7 +259,7 @@ impl Runner for LintRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         }
-        .with_filters(filter);
+        .with_filters(&filters);
 
         if let Some(basic_config_file) = oxlintrc_for_print {
             let config_file = config_builder.resolve_final_config_file(basic_config_file);
@@ -398,7 +391,7 @@ impl Runner for LintRunner {
         }) {
             stdout.write_all(end.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
             stdout.flush().unwrap();
-        };
+        }
 
         if diagnostic_result.errors_count() > 0 {
             CliRunResult::LintFoundErrors
