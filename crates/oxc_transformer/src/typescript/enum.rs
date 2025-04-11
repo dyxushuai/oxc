@@ -98,15 +98,19 @@ impl<'a> TypeScriptEnum<'a> {
             NONE,
         );
 
-        let has_potential_side_effect = decl.members.iter().any(|member| {
+        let has_potential_side_effect = decl.body.members.iter().any(|member| {
             matches!(
                 member.initializer,
                 Some(Expression::NewExpression(_) | Expression::CallExpression(_))
             )
         });
 
-        let statements =
-            self.transform_ts_enum_members(decl.scope_id(), &mut decl.members, &param_binding, ctx);
+        let statements = self.transform_ts_enum_members(
+            decl.scope_id(),
+            &mut decl.body.members,
+            &param_binding,
+            ctx,
+        );
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
         let callee = ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,
@@ -213,10 +217,7 @@ impl<'a> TypeScriptEnum<'a> {
         let mut prev_member_name = None;
 
         for member in members.iter_mut() {
-            let member_name = match &member.id {
-                TSEnumMemberName::Identifier(id) => id.name,
-                TSEnumMemberName::String(str) => str.value,
-            };
+            let member_name = member.id.static_name();
 
             let init = if let Some(initializer) = &mut member.initializer {
                 let constant_value =

@@ -1181,13 +1181,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn expression_ts_instantiation<T1>(
         self,
         span: Span,
         expression: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1195,7 +1195,7 @@ impl<'a> AstBuilder<'a> {
         Expression::TSInstantiationExpression(self.alloc_ts_instantiation_expression(
             span,
             expression,
-            type_parameters,
+            type_arguments,
         ))
     }
 
@@ -4225,7 +4225,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     #[inline]
@@ -4233,12 +4233,12 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
     ) -> Declaration<'a> {
         Declaration::TSEnumDeclaration(
-            self.alloc_ts_enum_declaration(span, id, members, r#const, declare),
+            self.alloc_ts_enum_declaration(span, id, body, r#const, declare),
         )
     }
 
@@ -4249,7 +4249,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     /// * `scope_id`
@@ -4258,14 +4258,14 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
         scope_id: ScopeId,
     ) -> Declaration<'a> {
         Declaration::TSEnumDeclaration(
             self.alloc_ts_enum_declaration_with_scope_id(
-                span, id, members, r#const, declare, scope_id,
+                span, id, body, r#const, declare, scope_id,
             ),
         )
     }
@@ -9642,7 +9642,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     #[inline]
@@ -9650,11 +9650,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
     ) -> TSEnumDeclaration<'a> {
-        TSEnumDeclaration { span, id, members, r#const, declare, scope_id: Default::default() }
+        TSEnumDeclaration { span, id, body, r#const, declare, scope_id: Default::default() }
     }
 
     /// Build a [`TSEnumDeclaration`], and store it in the memory arena.
@@ -9665,7 +9665,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     #[inline]
@@ -9673,11 +9673,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
     ) -> Box<'a, TSEnumDeclaration<'a>> {
-        Box::new_in(self.ts_enum_declaration(span, id, members, r#const, declare), self.allocator)
+        Box::new_in(self.ts_enum_declaration(span, id, body, r#const, declare), self.allocator)
     }
 
     /// Build a [`TSEnumDeclaration`] with `scope_id`.
@@ -9688,7 +9688,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     /// * `scope_id`
@@ -9697,19 +9697,12 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
         scope_id: ScopeId,
     ) -> TSEnumDeclaration<'a> {
-        TSEnumDeclaration {
-            span,
-            id,
-            members,
-            r#const,
-            declare,
-            scope_id: Cell::new(Some(scope_id)),
-        }
+        TSEnumDeclaration { span, id, body, r#const, declare, scope_id: Cell::new(Some(scope_id)) }
     }
 
     /// Build a [`TSEnumDeclaration`] with `scope_id`, and store it in the memory arena.
@@ -9720,7 +9713,7 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
-    /// * `members`
+    /// * `body`
     /// * `const`: `true` for const enums
     /// * `declare`
     /// * `scope_id`
@@ -9729,15 +9722,25 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
+        body: TSEnumBody<'a>,
         r#const: bool,
         declare: bool,
         scope_id: ScopeId,
     ) -> Box<'a, TSEnumDeclaration<'a>> {
         Box::new_in(
-            self.ts_enum_declaration_with_scope_id(span, id, members, r#const, declare, scope_id),
+            self.ts_enum_declaration_with_scope_id(span, id, body, r#const, declare, scope_id),
             self.allocator,
         )
+    }
+
+    /// Build a [`TSEnumBody`].
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `members`
+    #[inline]
+    pub fn ts_enum_body(self, span: Span, members: Vec<'a, TSEnumMember<'a>>) -> TSEnumBody<'a> {
+        TSEnumBody { span, members }
     }
 
     /// Build a [`TSEnumMember`].
@@ -9817,6 +9820,77 @@ impl<'a> AstBuilder<'a> {
             value,
             raw,
             lone_surrogates,
+        ))
+    }
+
+    /// Build a [`TSEnumMemberName::ComputedString`].
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    #[inline]
+    pub fn ts_enum_member_name_computed_string<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+    ) -> TSEnumMemberName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSEnumMemberName::ComputedString(self.alloc_string_literal(span, value, raw))
+    }
+
+    /// Build a [`TSEnumMemberName::ComputedString`] with `lone_surrogates`.
+    ///
+    /// This node contains a [`StringLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `value`: The value of the string.
+    /// * `raw`: The raw string as it appears in source code.
+    /// * `lone_surrogates`: The string value contains lone surrogates.
+    #[inline]
+    pub fn ts_enum_member_name_computed_string_with_lone_surrogates<A>(
+        self,
+        span: Span,
+        value: A,
+        raw: Option<Atom<'a>>,
+        lone_surrogates: bool,
+    ) -> TSEnumMemberName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        TSEnumMemberName::ComputedString(self.alloc_string_literal_with_lone_surrogates(
+            span,
+            value,
+            raw,
+            lone_surrogates,
+        ))
+    }
+
+    /// Build a [`TSEnumMemberName::ComputedTemplateString`].
+    ///
+    /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `quasis`
+    /// * `expressions`
+    #[inline]
+    pub fn ts_enum_member_name_computed_template_string(
+        self,
+        span: Span,
+        quasis: Vec<'a, TemplateElement<'a>>,
+        expressions: Vec<'a, Expression<'a>>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::ComputedTemplateString(self.alloc_template_literal(
+            span,
+            quasis,
+            expressions,
         ))
     }
 
@@ -10350,7 +10424,6 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
-    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_type_import_type<T1, T2>(
         self,
@@ -10359,7 +10432,6 @@ impl<'a> AstBuilder<'a> {
         options: T1,
         qualifier: Option<TSTypeName<'a>>,
         type_arguments: T2,
-        is_type_of: bool,
     ) -> TSType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
@@ -10371,7 +10443,6 @@ impl<'a> AstBuilder<'a> {
             options,
             qualifier,
             type_arguments,
-            is_type_of,
         ))
     }
 
@@ -13518,7 +13589,6 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
-    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
@@ -13527,7 +13597,6 @@ impl<'a> AstBuilder<'a> {
         options: T1,
         qualifier: Option<TSTypeName<'a>>,
         type_arguments: T2,
-        is_type_of: bool,
     ) -> TSTypeQueryExprName<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
@@ -13539,7 +13608,6 @@ impl<'a> AstBuilder<'a> {
             options,
             qualifier,
             type_arguments,
-            is_type_of,
         ))
     }
 
@@ -13554,7 +13622,6 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
-    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn ts_import_type<T1, T2>(
         self,
@@ -13563,7 +13630,6 @@ impl<'a> AstBuilder<'a> {
         options: T1,
         qualifier: Option<TSTypeName<'a>>,
         type_arguments: T2,
-        is_type_of: bool,
     ) -> TSImportType<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
@@ -13575,7 +13641,6 @@ impl<'a> AstBuilder<'a> {
             options: options.into_in(self.allocator),
             qualifier,
             type_arguments: type_arguments.into_in(self.allocator),
-            is_type_of,
         }
     }
 
@@ -13590,7 +13655,6 @@ impl<'a> AstBuilder<'a> {
     /// * `options`
     /// * `qualifier`
     /// * `type_arguments`
-    /// * `is_type_of`: `true` for `typeof import("foo")`
     #[inline]
     pub fn alloc_ts_import_type<T1, T2>(
         self,
@@ -13599,14 +13663,13 @@ impl<'a> AstBuilder<'a> {
         options: T1,
         qualifier: Option<TSTypeName<'a>>,
         type_arguments: T2,
-        is_type_of: bool,
     ) -> Box<'a, TSImportType<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, ObjectExpression<'a>>>>,
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
-            self.ts_import_type(span, argument, options, qualifier, type_arguments, is_type_of),
+            self.ts_import_type(span, argument, options, qualifier, type_arguments),
             self.allocator,
         )
     }
@@ -14345,13 +14408,13 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn ts_instantiation_expression<T1>(
         self,
         span: Span,
         expression: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> TSInstantiationExpression<'a>
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -14359,7 +14422,7 @@ impl<'a> AstBuilder<'a> {
         TSInstantiationExpression {
             span,
             expression,
-            type_parameters: type_parameters.into_in(self.allocator),
+            type_arguments: type_arguments.into_in(self.allocator),
         }
     }
 
@@ -14371,19 +14434,19 @@ impl<'a> AstBuilder<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `expression`
-    /// * `type_parameters`
+    /// * `type_arguments`
     #[inline]
     pub fn alloc_ts_instantiation_expression<T1>(
         self,
         span: Span,
         expression: Expression<'a>,
-        type_parameters: T1,
+        type_arguments: T1,
     ) -> Box<'a, TSInstantiationExpression<'a>>
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
     {
         Box::new_in(
-            self.ts_instantiation_expression(span, expression, type_parameters),
+            self.ts_instantiation_expression(span, expression, type_arguments),
             self.allocator,
         )
     }

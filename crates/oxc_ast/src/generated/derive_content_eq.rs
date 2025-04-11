@@ -1730,9 +1730,15 @@ impl ContentEq for TSThisParameter<'_> {
 impl ContentEq for TSEnumDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)
-            && ContentEq::content_eq(&self.members, &other.members)
+            && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.r#const, &other.r#const)
             && ContentEq::content_eq(&self.declare, &other.declare)
+    }
+}
+
+impl ContentEq for TSEnumBody<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.members, &other.members)
     }
 }
 
@@ -1748,6 +1754,8 @@ impl ContentEq for TSEnumMemberName<'_> {
         match (self, other) {
             (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
             (Self::String(a), Self::String(b)) => a.content_eq(b),
+            (Self::ComputedString(a), Self::ComputedString(b)) => a.content_eq(b),
+            (Self::ComputedTemplateString(a), Self::ComputedTemplateString(b)) => a.content_eq(b),
             _ => false,
         }
     }
@@ -2302,7 +2310,6 @@ impl ContentEq for TSImportType<'_> {
             && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.qualifier, &other.qualifier)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
-            && ContentEq::content_eq(&self.is_type_of, &other.is_type_of)
     }
 }
 
@@ -2420,7 +2427,7 @@ impl ContentEq for TSNamespaceExportDeclaration<'_> {
 impl ContentEq for TSInstantiationExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expression, &other.expression)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 

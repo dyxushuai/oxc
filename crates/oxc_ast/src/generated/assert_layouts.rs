@@ -911,14 +911,19 @@ const _: () = {
     assert!(offset_of!(TSThisParameter, this_span) == 8);
     assert!(offset_of!(TSThisParameter, type_annotation) == 16);
 
-    assert!(size_of::<TSEnumDeclaration>() == 80);
+    assert!(size_of::<TSEnumDeclaration>() == 88);
     assert!(align_of::<TSEnumDeclaration>() == 8);
     assert!(offset_of!(TSEnumDeclaration, span) == 0);
     assert!(offset_of!(TSEnumDeclaration, id) == 8);
-    assert!(offset_of!(TSEnumDeclaration, members) == 40);
-    assert!(offset_of!(TSEnumDeclaration, r#const) == 72);
-    assert!(offset_of!(TSEnumDeclaration, declare) == 73);
-    assert!(offset_of!(TSEnumDeclaration, scope_id) == 76);
+    assert!(offset_of!(TSEnumDeclaration, body) == 40);
+    assert!(offset_of!(TSEnumDeclaration, r#const) == 80);
+    assert!(offset_of!(TSEnumDeclaration, declare) == 81);
+    assert!(offset_of!(TSEnumDeclaration, scope_id) == 84);
+
+    assert!(size_of::<TSEnumBody>() == 40);
+    assert!(align_of::<TSEnumBody>() == 8);
+    assert!(offset_of!(TSEnumBody, span) == 0);
+    assert!(offset_of!(TSEnumBody, members) == 8);
 
     assert!(size_of::<TSEnumMember>() == 40);
     assert!(align_of::<TSEnumMember>() == 8);
@@ -1255,14 +1260,13 @@ const _: () = {
     assert!(size_of::<TSTypeQueryExprName>() == 16);
     assert!(align_of::<TSTypeQueryExprName>() == 8);
 
-    assert!(size_of::<TSImportType>() == 64);
+    assert!(size_of::<TSImportType>() == 56);
     assert!(align_of::<TSImportType>() == 8);
     assert!(offset_of!(TSImportType, span) == 0);
     assert!(offset_of!(TSImportType, argument) == 8);
     assert!(offset_of!(TSImportType, options) == 24);
     assert!(offset_of!(TSImportType, qualifier) == 32);
     assert!(offset_of!(TSImportType, type_arguments) == 48);
-    assert!(offset_of!(TSImportType, is_type_of) == 56);
 
     assert!(size_of::<TSFunctionType>() == 48);
     assert!(align_of::<TSFunctionType>() == 8);
@@ -1357,7 +1361,7 @@ const _: () = {
     assert!(align_of::<TSInstantiationExpression>() == 8);
     assert!(offset_of!(TSInstantiationExpression, span) == 0);
     assert!(offset_of!(TSInstantiationExpression, expression) == 8);
-    assert!(offset_of!(TSInstantiationExpression, type_parameters) == 24);
+    assert!(offset_of!(TSInstantiationExpression, type_arguments) == 24);
 
     assert!(size_of::<ImportOrExportKind>() == 1);
     assert!(align_of::<ImportOrExportKind>() == 1);
@@ -2302,14 +2306,19 @@ const _: () = {
     assert!(offset_of!(TSThisParameter, this_span) == 8);
     assert!(offset_of!(TSThisParameter, type_annotation) == 16);
 
-    assert!(size_of::<TSEnumDeclaration>() == 52);
+    assert!(size_of::<TSEnumDeclaration>() == 60);
     assert!(align_of::<TSEnumDeclaration>() == 4);
     assert!(offset_of!(TSEnumDeclaration, span) == 0);
     assert!(offset_of!(TSEnumDeclaration, id) == 8);
-    assert!(offset_of!(TSEnumDeclaration, members) == 28);
-    assert!(offset_of!(TSEnumDeclaration, r#const) == 44);
-    assert!(offset_of!(TSEnumDeclaration, declare) == 45);
-    assert!(offset_of!(TSEnumDeclaration, scope_id) == 48);
+    assert!(offset_of!(TSEnumDeclaration, body) == 28);
+    assert!(offset_of!(TSEnumDeclaration, r#const) == 52);
+    assert!(offset_of!(TSEnumDeclaration, declare) == 53);
+    assert!(offset_of!(TSEnumDeclaration, scope_id) == 56);
+
+    assert!(size_of::<TSEnumBody>() == 24);
+    assert!(align_of::<TSEnumBody>() == 4);
+    assert!(offset_of!(TSEnumBody, span) == 0);
+    assert!(offset_of!(TSEnumBody, members) == 8);
 
     assert!(size_of::<TSEnumMember>() == 24);
     assert!(align_of::<TSEnumMember>() == 4);
@@ -2646,14 +2655,13 @@ const _: () = {
     assert!(size_of::<TSTypeQueryExprName>() == 8);
     assert!(align_of::<TSTypeQueryExprName>() == 4);
 
-    assert!(size_of::<TSImportType>() == 36);
+    assert!(size_of::<TSImportType>() == 32);
     assert!(align_of::<TSImportType>() == 4);
     assert!(offset_of!(TSImportType, span) == 0);
     assert!(offset_of!(TSImportType, argument) == 8);
     assert!(offset_of!(TSImportType, options) == 16);
     assert!(offset_of!(TSImportType, qualifier) == 20);
     assert!(offset_of!(TSImportType, type_arguments) == 28);
-    assert!(offset_of!(TSImportType, is_type_of) == 32);
 
     assert!(size_of::<TSFunctionType>() == 28);
     assert!(align_of::<TSFunctionType>() == 4);
@@ -2748,7 +2756,7 @@ const _: () = {
     assert!(align_of::<TSInstantiationExpression>() == 4);
     assert!(offset_of!(TSInstantiationExpression, span) == 0);
     assert!(offset_of!(TSInstantiationExpression, expression) == 8);
-    assert!(offset_of!(TSInstantiationExpression, type_parameters) == 16);
+    assert!(offset_of!(TSInstantiationExpression, type_arguments) == 16);
 
     assert!(size_of::<ImportOrExportKind>() == 1);
     assert!(align_of::<ImportOrExportKind>() == 1);

@@ -2285,9 +2285,20 @@ impl ESTree for TSEnumDeclaration<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
-        state.serialize_field("body", &crate::serialize::TSEnumDeclarationBody(self));
+        state.serialize_field("body", &self.body);
         state.serialize_field("const", &self.r#const);
         state.serialize_field("declare", &self.declare);
+        state.end();
+    }
+}
+
+impl ESTree for TSEnumBody<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSEnumBody"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_field("members", &self.members);
         state.end();
     }
 }
@@ -2299,6 +2310,7 @@ impl ESTree for TSEnumMember<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
+        state.serialize_field("computed", &crate::serialize::TSEnumMemberComputed(self));
         state.serialize_field("initializer", &self.initializer);
         state.end();
     }
@@ -2309,6 +2321,8 @@ impl ESTree for TSEnumMemberName<'_> {
         match self {
             Self::Identifier(it) => it.serialize(serializer),
             Self::String(it) => it.serialize(serializer),
+            Self::ComputedString(it) => it.serialize(serializer),
+            Self::ComputedTemplateString(it) => it.serialize(serializer),
         }
     }
 }
@@ -3298,7 +3312,7 @@ impl ESTree for TSInstantiationExpression<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("typeParameters", &self.type_parameters);
+        state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -3315,7 +3329,7 @@ impl ESTree for ImportOrExportKind {
 impl ESTree for JSDocNullableType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("JSDocNullableType"));
+        state.serialize_field("type", &JsonSafeString("TSJSDocNullableType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -3327,7 +3341,7 @@ impl ESTree for JSDocNullableType<'_> {
 impl ESTree for JSDocNonNullableType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("JSDocNonNullableType"));
+        state.serialize_field("type", &JsonSafeString("TSJSDocNonNullableType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -3339,7 +3353,7 @@ impl ESTree for JSDocNonNullableType<'_> {
 impl ESTree for JSDocUnknownType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("JSDocUnknownType"));
+        state.serialize_field("type", &JsonSafeString("TSJSDocUnknownType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();

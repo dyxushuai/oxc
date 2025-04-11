@@ -7,7 +7,7 @@
 //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)
 //! * [rustc visitor](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_ast/src/visit.rs)
 
-#![expect(unused_variables, clippy::semicolon_if_nothing_returned)]
+#![expect(unused_variables, clippy::semicolon_if_nothing_returned, clippy::match_same_arms)]
 
 use std::cell::Cell;
 
@@ -770,6 +770,11 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_ts_enum_declaration(&mut self, it: &mut TSEnumDeclaration<'a>) {
         walk_ts_enum_declaration(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_enum_body(&mut self, it: &mut TSEnumBody<'a>) {
+        walk_ts_enum_body(self, it);
     }
 
     #[inline]
@@ -3329,8 +3334,17 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_binding_identifier(&mut it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        visitor.visit_ts_enum_members(&mut it.members);
+        visitor.visit_ts_enum_body(&mut it.body);
         visitor.leave_scope();
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_enum_body<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSEnumBody<'a>) {
+        let kind = AstType::TSEnumBody;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_ts_enum_members(&mut it.members);
         visitor.leave_node(kind);
     }
 
@@ -3355,6 +3369,8 @@ pub mod walk_mut {
         match it {
             TSEnumMemberName::Identifier(it) => visitor.visit_identifier_name(it),
             TSEnumMemberName::String(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::ComputedString(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::ComputedTemplateString(it) => visitor.visit_template_literal(it),
         }
     }
 
@@ -4308,7 +4324,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.expression);
-        visitor.visit_ts_type_parameter_instantiation(&mut it.type_parameters);
+        visitor.visit_ts_type_parameter_instantiation(&mut it.type_arguments);
         visitor.leave_node(kind);
     }
 

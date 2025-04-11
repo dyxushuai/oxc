@@ -1897,11 +1897,20 @@ impl<'a> Dummy<'a> for TSEnumDeclaration<'a> {
         Self {
             span: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
-            members: Dummy::dummy(allocator),
+            body: Dummy::dummy(allocator),
             r#const: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),
         }
+    }
+}
+
+impl<'a> Dummy<'a> for TSEnumBody<'a> {
+    /// Create a dummy [`TSEnumBody`].
+    ///
+    /// Does not allocate any data into arena.
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self { span: Dummy::dummy(allocator), members: Dummy::dummy(allocator) }
     }
 }
 
@@ -2619,7 +2628,6 @@ impl<'a> Dummy<'a> for TSImportType<'a> {
             options: Dummy::dummy(allocator),
             qualifier: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
-            is_type_of: Dummy::dummy(allocator),
         }
     }
 }
@@ -2810,7 +2818,7 @@ impl<'a> Dummy<'a> for TSInstantiationExpression<'a> {
         Self {
             span: Dummy::dummy(allocator),
             expression: Dummy::dummy(allocator),
-            type_parameters: Dummy::dummy(allocator),
+            type_arguments: Dummy::dummy(allocator),
         }
     }
 }

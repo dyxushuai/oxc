@@ -1233,6 +1233,15 @@ impl<'a> Format<'a> for TSEnumDeclaration<'a> {
     }
 }
 
+impl<'a> Format<'a> for TSEnumBody<'a> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        f.state_mut().stack.push(AstKind::TSEnumBody(hack(self)));
+        let result = self.write(f);
+        unsafe { f.state_mut().stack.pop_unchecked() };
+        result
+    }
+}
+
 impl<'a> Format<'a> for TSEnumMember<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSEnumMember(hack(self)));
@@ -1864,12 +1873,6 @@ impl<'a> Format<'a> for JSDocNonNullableType<'a> {
 }
 
 impl<'a> Format<'a> for JSDocUnknownType {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for Span {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }

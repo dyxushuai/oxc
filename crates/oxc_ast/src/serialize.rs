@@ -951,6 +951,26 @@ impl ESTree for JSXOpeningFragmentConverter<'_> {
 // TS
 // --------------------
 
+/// Serializer for `computed` field of `TSEnumMember`.
+///
+/// `true` if `id` field is one of the computed variants of `TSEnumMemberName`.
+//
+// TODO: Not ideal to have to include the enum discriminant's value here explicitly.
+// Need a "macro" e.g. `ENUM_MATCHES(id, ComputedString | ComputedTemplateString)`.
+#[ast_meta]
+#[estree(ts_type = "boolean", raw_deser = "DESER[u8](POS_OFFSET.id) > 1")]
+pub struct TSEnumMemberComputed<'a, 'b>(pub &'b TSEnumMember<'a>);
+
+impl ESTree for TSEnumMemberComputed<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        matches!(
+            self.0.id,
+            TSEnumMemberName::ComputedString(_) | TSEnumMemberName::ComputedTemplateString(_)
+        )
+        .serialize(serializer);
+    }
+}
+
 /// Serializer for `directive` field of `ExpressionStatement`.
 /// This field is always `null`, and only appears in the TS AST, not JS ESTree.
 #[ast_meta]
@@ -998,41 +1018,6 @@ pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
 impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         self.0.kind.is_global().serialize(serializer);
-    }
-}
-
-/// Serializer for `body` field of `TSEnumDeclaration`.
-/// This field is derived from `members` field.
-///
-/// `Span` indicates within braces `{ ... }`.
-/// ```ignore
-/// enum Foo { ... }
-/// |              | TSEnumDeclaration.span
-///          |     | TSEnumBody.span
-///        ^^ id_end + 1 for space
-/// ```
-/// NOTE: + 1 is not sufficient for all cases, e.g. `enum Foo{}`, `enum Foo   {}`, etc.
-/// We may need to reconsider adding `TSEnumBody` as Rust AST.
-#[ast_meta]
-#[estree(
-    ts_type = "TSEnumBody",
-    raw_deser = "
-        const tsEnumDeclMembers = DESER[Vec<TSEnumMember>](POS_OFFSET.members);
-        const bodyStart = THIS.id.end + 1;
-        {type: 'TSEnumBody', start: bodyStart, end: THIS.end, members: tsEnumDeclMembers}
-    "
-)]
-pub struct TSEnumDeclarationBody<'a, 'b>(pub &'b TSEnumDeclaration<'a>);
-
-impl ESTree for TSEnumDeclarationBody<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSEnumBody"));
-        let body_start = self.0.id.span.end + 1;
-        state.serialize_field("start", &body_start);
-        state.serialize_field("end", &self.0.span.end);
-        state.serialize_field("members", &self.0.members);
-        state.end();
     }
 }
 

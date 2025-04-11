@@ -25,14 +25,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Declaration<'a>> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier()?;
-        self.expect(Kind::LCurly)?;
-        let members = self.parse_delimited_list(
-            Kind::RCurly,
-            Kind::Comma,
-            /* trailing_separator */ true,
-            Self::parse_ts_enum_member,
-        )?;
-        self.expect(Kind::RCurly)?;
+        let body = self.parse_ts_enum_body()?;
         let span = self.end_span(span);
         self.verify_modifiers(
             modifiers,
@@ -42,10 +35,23 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.declaration_ts_enum(
             span,
             id,
-            members,
+            body,
             modifiers.contains_const(),
             modifiers.contains_declare(),
         ))
+    }
+
+    pub(crate) fn parse_ts_enum_body(&mut self) -> Result<TSEnumBody<'a>> {
+        let span = self.start_span();
+        self.expect(Kind::LCurly)?;
+        let members = self.parse_delimited_list(
+            Kind::RCurly,
+            Kind::Comma,
+            /* trailing_separator */ true,
+            Self::parse_ts_enum_member,
+        )?;
+        self.expect(Kind::RCurly)?;
+        Ok(self.ast.ts_enum_body(self.end_span(span), members))
     }
 
     pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {
@@ -66,16 +72,9 @@ impl<'a> ParserImpl<'a> {
                 Ok(TSEnumMemberName::String(self.alloc(literal)))
             }
             Kind::LBrack => match self.parse_computed_property_name()? {
-                Expression::StringLiteral(literal) => Ok(TSEnumMemberName::String(literal)),
+                Expression::StringLiteral(literal) => Ok(TSEnumMemberName::ComputedString(literal)),
                 Expression::TemplateLiteral(template) if template.is_no_substitution_template() => {
-                    Ok(self.ast.ts_enum_member_name_string(
-                        template.span,
-                        template.quasi().unwrap(),
-                        Some(Atom::from(
-                            Span::new(template.span.start + 1, template.span.end - 1)
-                                .source_text(self.source_text),
-                        )),
-                    ))
+                    Ok(TSEnumMemberName::ComputedTemplateString(template))
                 }
                 Expression::NumericLiteral(literal) => {
                     Err(diagnostics::enum_member_cannot_have_numeric_name(literal.span()))

@@ -946,16 +946,17 @@ export interface TSEnumDeclaration extends Span {
 
 export interface TSEnumBody extends Span {
   type: 'TSEnumBody';
-  members: TSEnumMember[];
+  members: Array<TSEnumMember>;
 }
 
 export interface TSEnumMember extends Span {
   type: 'TSEnumMember';
   id: TSEnumMemberName;
+  computed: boolean;
   initializer: Expression | null;
 }
 
-export type TSEnumMemberName = IdentifierName | StringLiteral;
+export type TSEnumMemberName = IdentifierName | StringLiteral | TemplateLiteral;
 
 export interface TSTypeAnnotation extends Span {
   type: 'TSTypeAnnotation';
@@ -1413,25 +1414,25 @@ export interface TSNamespaceExportDeclaration extends Span {
 export interface TSInstantiationExpression extends Span {
   type: 'TSInstantiationExpression';
   expression: Expression;
-  typeParameters: TSTypeParameterInstantiation;
+  typeArguments: TSTypeParameterInstantiation;
 }
 
 export type ImportOrExportKind = 'value' | 'type';
 
 export interface JSDocNullableType extends Span {
-  type: 'JSDocNullableType';
+  type: 'TSJSDocNullableType';
   typeAnnotation: TSType;
   postfix: boolean;
 }
 
 export interface JSDocNonNullableType extends Span {
-  type: 'JSDocNonNullableType';
+  type: 'TSJSDocNonNullableType';
   typeAnnotation: TSType;
   postfix: boolean;
 }
 
 export interface JSDocUnknownType extends Span {
-  type: 'JSDocUnknownType';
+  type: 'TSJSDocUnknownType';
 }
 
 export type AssignmentOperator =
@@ -1761,6 +1762,7 @@ export type Node =
   | JSXText
   | TSThisParameter
   | TSEnumDeclaration
+  | TSEnumBody
   | TSEnumMember
   | TSTypeAnnotation
   | TSLiteralType

@@ -643,16 +643,7 @@ impl Gen for TryStatement<'_> {
         p.print_soft_space();
         p.print_block_statement(&self.block, ctx);
         if let Some(handler) = &self.handler {
-            p.print_soft_space();
-            p.print_str("catch");
-            if let Some(param) = &handler.param {
-                p.print_soft_space();
-                p.print_str("(");
-                param.pattern.print(p, ctx);
-                p.print_str(")");
-            }
-            p.print_soft_space();
-            p.print_block_statement(&handler.body, ctx);
+            handler.r#gen(p, ctx);
         }
         if let Some(finalizer) = &self.finalizer {
             p.print_soft_space();
@@ -661,6 +652,22 @@ impl Gen for TryStatement<'_> {
             p.print_block_statement(finalizer, ctx);
         }
         p.print_soft_newline();
+    }
+}
+
+impl Gen for CatchClause<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_soft_space();
+        p.print_statement_comments(self.span.start);
+        p.print_str("catch");
+        if let Some(param) = &self.param {
+            p.print_soft_space();
+            p.print_str("(");
+            param.pattern.print(p, ctx);
+            p.print_str(")");
+        }
+        p.print_soft_space();
+        p.print_block_statement(&self.body, ctx);
     }
 }
 
@@ -2273,7 +2280,7 @@ impl GenExpr for TSNonNullExpression<'_> {
 impl GenExpr for TSInstantiationExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         self.expression.print_expr(p, precedence, ctx);
-        self.type_parameters.print(p, ctx);
+        self.type_arguments.print(p, ctx);
         if p.options.minify {
             p.print_hard_space();
         }
@@ -3527,9 +3534,6 @@ impl Gen for TSTypeQueryExprName<'_> {
 
 impl Gen for TSImportType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.is_type_of {
-            p.print_str("typeof ");
-        }
         p.print_str("import(");
         self.argument.print(p, ctx);
         if let Some(options) = &self.options {
@@ -3736,6 +3740,12 @@ impl Gen for TSEnumDeclaration<'_> {
         p.print_str("enum ");
         self.id.print(p, ctx);
         p.print_space_before_identifier();
+        self.body.print(p, ctx);
+    }
+}
+
+impl Gen for TSEnumBody<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for (index, member) in self.members.iter().enumerate() {
                 p.print_leading_comments(member.span().start);
@@ -3755,7 +3765,21 @@ impl Gen for TSEnumMember<'_> {
         match &self.id {
             TSEnumMemberName::Identifier(decl) => decl.print(p, ctx),
             TSEnumMemberName::String(decl) => p.print_string_literal(decl, false),
+            TSEnumMemberName::ComputedString(decl) => {
+                p.print_ascii_byte(b'[');
+                p.print_string_literal(decl, false);
+                p.print_ascii_byte(b']');
+            }
+            TSEnumMemberName::ComputedTemplateString(decl) => {
+                let quasi = decl.quasis.first().unwrap();
+                p.add_source_mapping(quasi.span);
+
+                p.print_str("[`");
+                p.print_str(quasi.value.raw.as_str());
+                p.print_str("`]");
+            }
         }
+
         if let Some(init) = &self.initializer {
             p.print_soft_space();
             p.print_equal();

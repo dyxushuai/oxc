@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use tower_lsp::lsp_types::Url;
+use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use oxc_linter::{ConfigStoreBuilder, FixKind, LintOptions, Linter};
 
@@ -23,7 +23,7 @@ impl ServerLinter {
         Self { linter: Arc::new(linter) }
     }
 
-    pub fn run_single(&self, uri: &Url, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
         IsolatedLintHandler::new(Arc::clone(&self.linter))
             .run_single(&uri.to_file_path().unwrap(), content)
     }
@@ -96,5 +96,38 @@ mod test {
         Tester::new().test_and_snapshot_single_file("fixtures/linter/astro/debugger.astro");
         Tester::new().test_and_snapshot_single_file("fixtures/linter/vue/debugger.vue");
         Tester::new().test_and_snapshot_single_file("fixtures/linter/svelte/debugger.svelte");
+    }
+
+    #[test]
+    fn test_cross_module_debugger() {
+        let config_store: oxc_linter::ConfigStore = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            Oxlintrc::from_file(&PathBuf::from("fixtures/linter/cross_module/.oxlintrc.json"))
+                .unwrap(),
+        )
+        .unwrap()
+        .build()
+        .unwrap();
+        let linter = Linter::new(LintOptions::default(), config_store);
+
+        Tester::new_with_linter(linter)
+            .test_and_snapshot_single_file("fixtures/linter/cross_module/debugger.ts");
+    }
+
+    #[test]
+    // ToDo: only available with runtime oxc-project/oxc#10268
+    fn test_cross_module_no_cycle() {
+        let config_store = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            Oxlintrc::from_file(&PathBuf::from("fixtures/linter/cross_module/.oxlintrc.json"))
+                .unwrap(),
+        )
+        .unwrap()
+        .build()
+        .unwrap();
+        let linter = Linter::new(LintOptions::default(), config_store);
+
+        Tester::new_with_linter(linter)
+            .test_and_snapshot_single_file("fixtures/linter/cross_module/dep-a.ts");
     }
 }

@@ -1290,18 +1290,23 @@ function deserializeTSThisParameter(pos) {
 }
 
 function deserializeTSEnumDeclaration(pos) {
-  const end = deserializeU32(pos + 4),
-    id = deserializeBindingIdentifier(pos + 8);
-  const tsEnumDeclMembers = deserializeVecTSEnumMember(pos + 40);
-  const bodyStart = id.end + 1;
   return {
     type: 'TSEnumDeclaration',
     start: deserializeU32(pos),
-    end,
-    id,
-    body: { type: 'TSEnumBody', start: bodyStart, end: end, members: tsEnumDeclMembers },
-    const: deserializeBool(pos + 72),
-    declare: deserializeBool(pos + 73),
+    end: deserializeU32(pos + 4),
+    id: deserializeBindingIdentifier(pos + 8),
+    body: deserializeTSEnumBody(pos + 40),
+    const: deserializeBool(pos + 80),
+    declare: deserializeBool(pos + 81),
+  };
+}
+
+function deserializeTSEnumBody(pos) {
+  return {
+    type: 'TSEnumBody',
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
+    members: deserializeVecTSEnumMember(pos + 8),
   };
 }
 
@@ -1311,6 +1316,7 @@ function deserializeTSEnumMember(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeTSEnumMemberName(pos + 8),
+    computed: deserializeU8(pos + 8) > 1,
     initializer: deserializeOptionExpression(pos + 24),
   };
 }
@@ -1952,13 +1958,13 @@ function deserializeTSInstantiationExpression(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     expression: deserializeExpression(pos + 8),
-    typeParameters: deserializeBoxTSTypeParameterInstantiation(pos + 24),
+    typeArguments: deserializeBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 
 function deserializeJSDocNullableType(pos) {
   return {
-    type: 'JSDocNullableType',
+    type: 'TSJSDocNullableType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeAnnotation: deserializeTSType(pos + 8),
@@ -1968,7 +1974,7 @@ function deserializeJSDocNullableType(pos) {
 
 function deserializeJSDocNonNullableType(pos) {
   return {
-    type: 'JSDocNonNullableType',
+    type: 'TSJSDocNonNullableType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     typeAnnotation: deserializeTSType(pos + 8),
@@ -1978,7 +1984,7 @@ function deserializeJSDocNonNullableType(pos) {
 
 function deserializeJSDocUnknownType(pos) {
   return {
-    type: 'JSDocUnknownType',
+    type: 'TSJSDocUnknownType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3555,6 +3561,10 @@ function deserializeTSEnumMemberName(pos) {
       return deserializeBoxIdentifierName(pos + 8);
     case 1:
       return deserializeBoxStringLiteral(pos + 8);
+    case 2:
+      return deserializeBoxStringLiteral(pos + 8);
+    case 3:
+      return deserializeBoxTemplateLiteral(pos + 8);
     default:
       throw new Error(`Unexpected discriminant ${uint8[pos]} for TSEnumMemberName`);
   }

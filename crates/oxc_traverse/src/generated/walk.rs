@@ -8,6 +8,7 @@
     clippy::ref_as_ptr,
     clippy::cast_ptr_alignment,
     clippy::borrow_as_ptr,
+    clippy::match_same_arms,
     unsafe_op_in_unsafe_fn
 )]
 
@@ -3740,15 +3741,33 @@ unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
         .get()
         .unwrap();
     ctx.set_current_scope_id(current_scope_id);
-    ctx.retag_stack(AncestorType::TSEnumDeclarationMembers);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_MEMBERS)
+    ctx.retag_stack(AncestorType::TSEnumDeclarationBody);
+    walk_ts_enum_body(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_BODY) as *mut TSEnumBody,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_enum_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_enum_body<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSEnumBody<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_enum_body(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSEnumBodyMembers(
+        ancestor::TSEnumBodyWithoutMembers(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_BODY_MEMBERS)
         as *mut Vec<TSEnumMember>)
     {
         walk_ts_enum_member(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
-    ctx.set_current_scope_id(previous_scope_id);
-    traverser.exit_ts_enum_declaration(&mut *node, ctx);
+    traverser.exit_ts_enum_body(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_enum_member<'a, Tr: Traverse<'a>>(
@@ -3786,6 +3805,12 @@ unsafe fn walk_ts_enum_member_name<'a, Tr: Traverse<'a>>(
         }
         TSEnumMemberName::String(node) => {
             walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSEnumMemberName::ComputedString(node) => {
+            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSEnumMemberName::ComputedTemplateString(node) => {
+            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
         }
     }
     traverser.exit_ts_enum_member_name(&mut *node, ctx);
@@ -5519,10 +5544,10 @@ unsafe fn walk_ts_instantiation_expression<'a, Tr: Traverse<'a>>(
             as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::TSInstantiationExpressionTypeParameters);
+    ctx.retag_stack(AncestorType::TSInstantiationExpressionTypeArguments);
     walk_ts_type_parameter_instantiation(
         traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_PARAMETERS)
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_ARGUMENTS)
             as *mut Box<TSTypeParameterInstantiation>)) as *mut _,
         ctx,
     );
